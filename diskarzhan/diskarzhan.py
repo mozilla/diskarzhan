@@ -1,0 +1,116 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+import re
+import sys
+
+from .std import api as std_api
+from .std import capi as std_capi
+
+
+def fix_includes(path, raw_content, line_to_delete):
+    prev_content = raw_content.split("\n")
+    new_content = [
+        raw_line
+        for lineno, raw_line in enumerate(prev_content, start=1)
+        if lineno != line_to_delete
+    ]
+    with open(path, "w") as outfd:
+        outfd.write("\n".join(new_content))
+
+
+symbol_pattern = r"\b{}\b"
+
+
+def lint_std_headers(path, raw_content, fix):
+    # If there a:
+    #   namespace std {...}
+    # or a:
+    #   using namespace std
+    # or even:
+    #   namespace std = ...
+    # then we just look for symbol tokens.
+    # Otherwise we look for the very common std::{token} pattern,
+    # which avoids same false negative.
+    if re.search(r"\bnamespace\s+std\b", raw_content):
+        symbol_pattern = r"\b{}\b"
+    else:
+        symbol_pattern = r"\bstd::{}\b"
+
+    changes = 0
+    for header, symbols in std_api.items():
+        headerline = rf"#\s*include <{header}>"
+        if not (match := re.search(headerline, raw_content)):
+            continue
+        if re.search(
+            "|".join(symbol_pattern.format(symbol) for symbol in symbols), raw_content
+        ):
+            continue
+
+        msg = f"{path} includes <{header}> but does not reference any of its API"
+        lineno = 1 + raw_content.count("\n", 0, match.start())
+
+        if fix:
+            fix_includes(path, raw_content, lineno)
+        else:
+            print(f"{path}:{lineno}: {msg}")
+        changes += 1
+    return changes
+
+
+def lint_cstd_headers(path, raw_content, fix):
+    symbol_pattern = r"\b((std)?::)?{}\b"
+
+    changes = 0
+    for header, symbols in std_capi.items():
+        headerline = rf"#\s*include <({header}|c{header[:-2]})>"
+        if not (match := re.search(headerline, raw_content)):
+            continue
+        if re.search(
+            "|".join(symbol_pattern.format(symbol) for symbol in symbols), raw_content
+        ):
+            continue
+
+        msg = (
+            f"{path} includes <{match.group(1)}> but does not reference any of its API"
+        )
+        lineno = 1 + raw_content.count("\n", 0, match.start())
+
+        if fix:
+            fix_includes(path, raw_content, lineno)
+        else:
+            print(f"{path}:{lineno}: {msg}")
+        changes += 1
+    return changes
+
+
+def lint(paths, *, fix=False):
+    changes = 0
+
+    for path in paths:
+        try:
+            with open(path) as fd:
+                raw_content = fd.read()
+        except UnicodeDecodeError:
+            continue
+
+        changes += lint_std_headers(path, raw_content, fix)
+        changes += lint_cstd_headers(path, raw_content, fix)
+
+    return changes
+
+
+def run():
+    import argparse
+
+    parser = argparse.ArgumentParser(description="cleanup standard includes")
+    parser.add_argument("sources", nargs="+", type=str, help="files to cleanup")
+    parser.add_argument(
+        "--fix", action="store_true", help="apply modification in-place"
+    )
+    args = parser.parse_args()
+    changed = lint(args.sources, fix=args.fix)
+    print(
+        f"{'Applied' if args.fix else 'Found'} {changed} change{'s' if changed else ''}"
+    )

@@ -1,0 +1,24 @@
+diskarzhañ
+==========
+
+A stupide include cleaner for standard headers.
+
+Instead of trying to be smart, diskarzhañ maintains a mapping of symbols provided
+by a header, greps for those symbols in files, and remove headers if no symbols
+are found.
+
+If your code was relying on transitive include, diskarzhañ does not try to help
+you, it removes the non-minimal include and then you'll need to add the missing
+minimal ones.
+
+Once you reach a stable situation, you can use diskarzhañ in CI to prevent
+regression.
+
+Because diskarzhañ does not compile ypur code, it is configuration independant and
+runs very fast. It sometimes misses some unused headers but should not remove
+used ones. If so... fill a bug!
+
+diskarzhañ has been initially developped as an anonymous linter for the Firefox
+codebase. It is shared here as a standalone tool for ease of distribution.
+
+/trugarez ha ken ar cʼhentañ gwel/
