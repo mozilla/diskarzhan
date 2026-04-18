@@ -9,12 +9,13 @@ from .std import api as std_api
 from .std import capi as std_capi
 
 
-def fix_includes(path, raw_content, line_to_delete):
+def fix_includes(path, raw_content, changes):
+    lines_to_delete = {lineno for lineno, _ in changes}
     prev_content = raw_content.split("\n")
     new_content = [
         raw_line
         for lineno, raw_line in enumerate(prev_content, start=1)
-        if lineno != line_to_delete
+        if lineno not in lines_to_delete
     ]
     with open(path, "w") as outfd:
         outfd.write("\n".join(new_content))
@@ -38,7 +39,7 @@ def lint_std_headers(path, raw_content, fix):
     else:
         symbol_pattern = r"\bstd::{}\b"
 
-    changes = 0
+    changes = []
     for header, symbols in std_api.items():
         headerline = rf"#\s*include <{header}>"
         if not (match := re.search(headerline, raw_content)):
@@ -50,19 +51,15 @@ def lint_std_headers(path, raw_content, fix):
 
         msg = f"{path} includes <{header}> but does not reference any of its API"
         lineno = 1 + raw_content.count("\n", 0, match.start())
+        changes.append((lineno, msg))
 
-        if fix:
-            fix_includes(path, raw_content, lineno)
-        else:
-            print(f"{path}:{lineno}: {msg}")
-        changes += 1
     return changes
 
 
 def lint_cstd_headers(path, raw_content, fix):
     symbol_pattern = r"\b((std)?::)?{}\b"
 
-    changes = 0
+    changes = []
     for header, symbols in std_capi.items():
         headerline = rf"#\s*include <({header}|c{header[:-2]})>"
         if not (match := re.search(headerline, raw_content)):
@@ -76,18 +73,14 @@ def lint_cstd_headers(path, raw_content, fix):
             f"{path} includes <{match.group(1)}> but does not reference any of its API"
         )
         lineno = 1 + raw_content.count("\n", 0, match.start())
+        changes.append((lineno, msg))
 
-        if fix:
-            fix_includes(path, raw_content, lineno)
-        else:
-            print(f"{path}:{lineno}: {msg}")
-        changes += 1
     return changes
 
 
 def lint(paths, *, fix=False):
-    changes = 0
 
+    change_count = 0
     for path in paths:
         try:
             with open(path) as fd:
@@ -95,10 +88,18 @@ def lint(paths, *, fix=False):
         except UnicodeDecodeError:
             continue
 
-        changes += lint_std_headers(path, raw_content, fix)
+        changes = lint_std_headers(path, raw_content, fix)
         changes += lint_cstd_headers(path, raw_content, fix)
 
-    return changes
+        if fix:
+            fix_includes(path, raw_content, changes)
+        else:
+            for lineno, msg in changes:
+                print(f"{path}:{lineno}: {msg}")
+
+        change_count += len(changes)
+
+    return change_count
 
 
 def run():
