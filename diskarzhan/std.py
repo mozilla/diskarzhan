@@ -164,6 +164,7 @@ api = {
     "string": [
         "char_traits",
         "string",
+        "basic_string",
         "u8string",
         "u16string",
         "u32string",
