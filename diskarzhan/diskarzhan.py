@@ -114,3 +114,5 @@ def run():
     print(
         f"{'Applied' if args.fix else 'Found'} {changed} change{'s' if changed else ''}"
     )
+    if not args.fix and changed:
+        sys.exit(1)
