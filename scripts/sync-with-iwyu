@@ -1,0 +1,82 @@
+#!/usr/bin/env python
+
+import urllib.request
+from collections import defaultdict
+
+ref_url = "https://raw.githubusercontent.com/include-what-you-use/include-what-you-use/refs/heads/master/std_symbol_map.inc"
+
+with urllib.request.urlopen(ref_url) as url:
+    iwyu_raw = url.read().decode()
+
+iwyu_list = (
+    iwyu_raw.replace("//", "#")
+    .replace("{", "(")
+    .replace("}", ")")
+    .replace(", kPrivate", "")
+    .replace(", kPublic", "")
+)
+
+all_symbols = eval(f"[{iwyu_list}]")
+diskharzan_symbols = defaultdict(set)
+
+
+def extract(symbol):
+    if symbol.startswith("std::"):
+        symbol = symbol[5:]
+    index_lpar = symbol.find("(")
+    index_lang = symbol.find("<")
+    index_lpar = index_lpar if index_lpar >= 0 else len(symbol)
+    index_rpar = index_lang if index_lang >= 0 else len(symbol)
+    normalized_symbol = symbol[: min(index_lpar, index_rpar)]
+    index_nssep = normalized_symbol.rfind("::")
+    if index_nssep >= 0:
+        normalized_symbol = normalized_symbol[index_nssep + 2 :]
+    if normalized_symbol.startswith("operator"):
+        return None
+    if normalized_symbol == "std":
+        return None
+    return normalized_symbol
+
+
+for symbol, header in all_symbols:
+    if normalized_symbol := extract(symbol):
+        diskharzan_symbols[header[1:-1]].add(normalized_symbol)
+
+import sys
+
+sys.path.insert(0, "../diskarzhan")
+from std import api, capi
+
+for header, symbols in diskharzan_symbols.items():
+    if header in api:
+        Header = False
+        for symbol in symbols:
+            if symbol not in api[header]:
+                if not Header:
+                    Header = True
+                    print(f'"{header}": [')
+                print(
+                    f'"{symbol}",',
+                )
+        if Header:
+            print("],")
+
+    elif header[1:] + ".h" in capi:
+        Header = False
+        for symbol in symbols:
+            if symbol not in capi[header[1:] + ".h"]:
+                if not Header:
+                    Header = True
+                    print(f'"{header[1:] + ".h"}": [')
+                print(
+                    f'"{symbol}",',
+                )
+        if Header:
+            print("],")
+    else:
+        print(f'"{header}": [')
+        for symbol in symbols:
+            print(
+                f'"{symbol}",',
+            )
+        print("],")
