@@ -2,11 +2,15 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+import os.path
 import re
 import sys
+import yaml
 
-from .std import api as std_api
-from .std import capi as std_capi
+with open(os.path.join(os.path.dirname(__file__), "diskarzhan.yaml")) as fd:
+    _database = yaml.safe_load(fd)
+    cxx_api = _database["stdcxx"]
+    c_api = _database["stdc"]
 
 
 def fix_includes(path, raw_content, changes):
@@ -40,7 +44,7 @@ def lint_std_headers(path, raw_content, fix):
         symbol_pattern = r"\bstd::{}\b"
 
     changes = []
-    for header, symbols in std_api.items():
+    for header, symbols in cxx_api.items():
         headerline = rf"#\s*include <{header}>"
         if not (match := re.search(headerline, raw_content)):
             continue
@@ -60,7 +64,7 @@ def lint_cstd_headers(path, raw_content, fix):
     symbol_pattern = r"\b((std)?::)?{}\b"
 
     changes = []
-    for header, symbols in std_capi.items():
+    for header, symbols in c_api.items():
         headerline = rf"#\s*include <({header}|c{header[:-2]})>"
         if not (match := re.search(headerline, raw_content)):
             continue

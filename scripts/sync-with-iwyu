@@ -2,6 +2,8 @@
 
 import urllib.request
 from collections import defaultdict
+import os.path
+import yaml
 
 ref_url = "https://raw.githubusercontent.com/include-what-you-use/include-what-you-use/refs/heads/master/std_symbol_map.inc"
 
@@ -42,16 +44,18 @@ for symbol, header in all_symbols:
     if normalized_symbol := extract(symbol):
         diskharzan_symbols[header[1:-1]].add(normalized_symbol)
 
-import sys
-
-sys.path.insert(0, "../diskarzhan")
-from std import api, capi
+with open(
+    os.path.join(os.path.dirname(__file__), "..", "diskarzhan", "diskarzhan.yaml")
+) as fd:
+    _database = yaml.safe_load(fd)
+    cxx_api = _database["stdcxx"]
+    c_api = _database["stdc"]
 
 for header, symbols in diskharzan_symbols.items():
-    if header in api:
+    if header in cxx_api:
         Header = False
         for symbol in symbols:
-            if symbol not in api[header]:
+            if symbol not in cxx_api[header]:
                 if not Header:
                     Header = True
                     print(f'"{header}": [')
@@ -61,10 +65,10 @@ for header, symbols in diskharzan_symbols.items():
         if Header:
             print("],")
 
-    elif header[1:] + ".h" in capi:
+    elif header[1:] + ".h" in c_api:
         Header = False
         for symbol in symbols:
-            if symbol not in capi[header[1:] + ".h"]:
+            if symbol not in c_api[header[1:] + ".h"]:
                 if not Header:
                     Header = True
                     print(f'"{header[1:] + ".h"}": [')
