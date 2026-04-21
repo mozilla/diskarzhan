@@ -25,9 +25,6 @@ def fix_includes(path, raw_content, changes):
         outfd.write("\n".join(new_content))
 
 
-symbol_pattern = r"\b{}\b"
-
-
 def lint_std_headers(path, raw_content):
     # If there a:
     #   namespace std {...}
