@@ -471,9 +471,82 @@ stdc:
   - sigjmp_buf
   - sigsetjmp
   signal.h:
+  - MINSIGSTKSZ
+  - SA_NOCLDSTOP
+  - SA_NOCLDWAIT
+  - SA_NODEFER
+  - SA_ONSTACK
+  - SA_RESETHAND
+  - SA_RESTART
+  - SA_SIGINFO
+  - SIGABRT
+  - SIGBUS
+  - SIGCHLD
+  - SIGCONT
+  - SIGFPE
+  - SIGHUP
+  - SIGILL
+  - SIGINT
+  - SIGKILL
+  - SIGPIPE
+  - SIGPROF
+  - SIGQUIT
+  - SIGSEGV
+  - SIGSTKSZ
+  - SIGSTP
+  - SIGSYS
+  - SIGTERM
+  - SIGTRAP
+  - SIGTTIN
+  - SIGTTOU
+  - SIGURG
+  - SIGUSR1
+  - SIGUSR2
+  - SIGVTALRM
+  - SIGXCPU
+  - SIGXFSZ
+  - SIG_BLOCK
+  - SIG_DFL
+  - SIG_ERR
+  - SIG_HOLD
+  - SIG_IGN
+  - SIG_SETMASK
+  - SIG_UNBLOCK
+  - SS_DISABLE
+  - SS_ONSTACK
+  - kill
+  - killpg
+  - pthread_kill
+  - pthread_sigmask
+  - raise
   - raise
   - sig_atomic_t
+  - sigaction
+  - sigaddset
+  - sigaltstack
+  - sigdelset
+  - sigemptyset
+  - sigevent
+  - sigfillset
+  - sighold
+  - sigignore
+  - siginfo_t
+  - siginterrupt
+  - sigismember
   - signal
+  - sigpause
+  - sigpending
+  - sigprocmask
+  - sigqueue
+  - sigrelse
+  - sigreturn
+  - sigset
+  - sigstack
+  - sigsuspend
+  - sigtimedwait
+  - sigwait
+  - sigwaitinfo
+  - stack_t
   stdarg.h:
   - ca_copy
   - va_arg
