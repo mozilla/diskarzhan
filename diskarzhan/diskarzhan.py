@@ -28,7 +28,7 @@ def fix_includes(path, raw_content, changes):
 symbol_pattern = r"\b{}\b"
 
 
-def lint_std_headers(path, raw_content, fix):
+def lint_std_headers(path, raw_content):
     # If there a:
     #   namespace std {...}
     # or a:
@@ -60,7 +60,7 @@ def lint_std_headers(path, raw_content, fix):
     return changes
 
 
-def lint_cstd_headers(path, raw_content, fix):
+def lint_cstd_headers(path, raw_content):
     symbol_pattern = r"\b((std)?::)?{}\b"
 
     changes = []
@@ -92,8 +92,8 @@ def lint(paths, *, fix=False):
         except UnicodeDecodeError:
             continue
 
-        changes = lint_std_headers(path, raw_content, fix)
-        changes += lint_cstd_headers(path, raw_content, fix)
+        changes = lint_std_headers(path, raw_content)
+        changes += lint_cstd_headers(path, raw_content)
 
         if fix:
             fix_includes(path, raw_content, changes)
