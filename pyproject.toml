@@ -14,9 +14,11 @@ classifiers=[
   'Programming Language :: Python :: Implementation :: CPython',
   'Topic :: Software Development :: Compilers',
 ]
+dependencies = ["pyyaml"]
 
 [project.urls]
 Homepage = "https://github.com/mozilla/diskarzhan"
 
 [project.scripts]
 diskarzhan = "diskarzhan.diskarzhan:run"
+
