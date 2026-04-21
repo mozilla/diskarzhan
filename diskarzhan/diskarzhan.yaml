@@ -1911,6 +1911,7 @@ stdcxx:
   - hardware_constructive_interference_size
   - hardware_destructive_interference_size
   - launder
+  - new
   - new_handler
   - nothrow
   - nothrow_t
