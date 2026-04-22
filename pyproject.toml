@@ -2,7 +2,7 @@
 name = "diskarzhan"
 authors = [{name="Serge Guelton", email="sguelton@mozilla.com"}]
 license = {file = "LICENSE"}
-version = "0.1.5"
+version = "0.1.6"
 description = "Simple C and C++ standard header curator"
 requires-python = ">=3.8"
 classifiers=[
