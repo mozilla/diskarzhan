@@ -638,47 +638,28 @@ stdc:
   - SEEK_END
   - SEEK_SET
   - TMP_MAX
-  - _Exit
-  - _exit
-  - _wtoi
-  - _wtoi_l
-  - abort
-  - abs
-  - aligned_alloc
-  - at_quick_exit
-  - atexit
-  - atof
-  - atoi
-  - atol
-  - atoll
-  - bsearch
-  - call_once
-  - calloc
   - clearerr
-  - div
-  - div_t
-  - exit
+  - clearerr
   - fclose
   - fdopen
   - feof
+  - feof
+  - ferror
   - ferror
   - fflush
   - fgetc
   - fgetpos
   - fgets
   - fileno
+  - fileno
   - fmemopen
   - fopen
   - fopencookie
-  - fpos_t
   - fprintf
   - fpurge
   - fputc
   - fputs
   - fread
-  - free
-  - free_aligned_sized
-  - free_sized
   - freopen
   - fscanf
   - fseek
@@ -688,35 +669,22 @@ stdc:
   - ftello
   - fwrite
   - getc
+  - getc
   - getchar
-  - getenv
+  - getchar
   - gets
   - getw
-  - labs
-  - ldiv
-  - ldiv_t
-  - llabs
-  - lldiv
-  - lldiv_t
-  - malloc
-  - mblen
-  - mbstowcs
-  - mbtowc
-  - memalignment
   - mktemp
   - open_memstream
   - open_wmemstream
   - perror
   - printf
   - putc
+  - putc
   - putchar
-  - putenv
+  - putchar
   - puts
   - putw
-  - qsort
-  - quick_exit
-  - rand
-  - realloc
   - remove
   - rename
   - rewind
@@ -728,25 +696,13 @@ stdc:
   - snprintf
   - snwprintf
   - sprintf
-  - srand
   - sscanf
   - stderr
   - stdin
   - stdout
   - strerror
-  - strfromd
-  - strfromf
-  - strfroml
-  - strtod
-  - strtof
-  - strtol
-  - strtold
-  - strtoll
-  - strtoul
-  - strtoull
   - sys_errlist
   - sys_nerr
-  - system
   - tempnam
   - tmpfile
   - tmpnam
@@ -758,8 +714,6 @@ stdc:
   - vsnprintf
   - vsprintf
   - vsscanf
-  - wcstombs
-  - wctomb
   stdlib.h:
   - _Exit
   - _exit
