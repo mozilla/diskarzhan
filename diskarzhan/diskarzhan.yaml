@@ -2746,6 +2746,7 @@ stdcxx:
   - bad_cast
   - bad_typeid
   - type_info
+  - typeid
   unordered_map:
   - unordered_map
   - unordered_multimap
