@@ -1583,6 +1583,7 @@ stdcxx:
   - function
   - greater
   - greater_equal
+  - hash
   - identity
   - invoke
   - invoke_r
