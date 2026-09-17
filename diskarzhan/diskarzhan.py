@@ -21,7 +21,7 @@ def fix_includes(path, raw_content, changes):
         for lineno, raw_line in enumerate(prev_content, start=1)
         if lineno not in lines_to_delete
     ]
-    with open(path, "w") as outfd:
+    with open(path, "w", newline="\n") as outfd:
         outfd.write("\n".join(new_content))
 
 
@@ -93,7 +93,8 @@ def lint(paths, *, fix=False):
         changes += lint_cstd_headers(path, raw_content)
 
         if fix:
-            fix_includes(path, raw_content, changes)
+            if changes:
+                fix_includes(path, raw_content, changes)
         else:
             for lineno, msg in changes:
                 print(f"{path}:{lineno}: {msg}")
