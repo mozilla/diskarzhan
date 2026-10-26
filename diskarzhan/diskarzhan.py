@@ -36,18 +36,20 @@ def lint_std_headers(path, raw_content):
     # Otherwise we look for the very common std::{token} pattern,
     # which avoids same false negative.
     if re.search(r"\bnamespace\s+std\b", raw_content):
-        symbol_pattern = r"\b{}\b"
+        symbol_pattern = r"\b({})\b"
     else:
-        symbol_pattern = r"\bstd::{}\b"
+        symbol_pattern = r"\bstd::({})\b"
+
+    file_symbols = set(
+        re.findall(symbol_pattern.format(r"[a-zA-Z_][a-zA-Z_0-9]*"), raw_content)
+    )
 
     changes = []
     for header, symbols in cxx_api.items():
         headerline = rf"#\s*include <{header}>"
         if not (match := re.search(headerline, raw_content)):
             continue
-        if re.search(
-            "|".join(symbol_pattern.format(symbol) for symbol in symbols), raw_content
-        ):
+        if not file_symbols.isdisjoint(symbols):
             continue
 
         msg = f"{path} includes <{header}> but does not reference any of its API"
@@ -58,16 +60,18 @@ def lint_std_headers(path, raw_content):
 
 
 def lint_cstd_headers(path, raw_content):
-    symbol_pattern = r"\b((std)?::)?{}\b"
+    symbol_pattern = r"\b(?:(?:std)?::)?({})\b"
+
+    file_symbols = set(
+        re.findall(symbol_pattern.format(r"[a-zA-Z_][a-zA-Z_0-9]*"), raw_content)
+    )
 
     changes = []
     for header, symbols in c_api.items():
         headerline = rf"#\s*include <({header}|c{header[:-2]})>"
         if not (match := re.search(headerline, raw_content)):
             continue
-        if re.search(
-            "|".join(symbol_pattern.format(symbol) for symbol in symbols), raw_content
-        ):
+        if not file_symbols.isdisjoint(symbols):
             continue
 
         msg = (
