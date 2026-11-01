@@ -1,5 +1,6 @@
+import re
 import unittest
-from diskarzhan.diskarzhan import lint_std_headers, lint_cstd_headers
+from diskarzhan.diskarzhan import lint_headers, lint_std_headers, lint_cstd_headers
 
 
 class UnusedCHeaderTestCase(unittest.TestCase):
@@ -82,4 +83,46 @@ class UnusedCXXHeaderTestCase(unittest.TestCase):
         self.assertEqual(changes,
             [(1,
               '<> includes <iostream> but does not reference any of its API')])
+
+
+class LintHeadersTestCase(unittest.TestCase):
+    include_re = re.compile(r'#\s*include\s*"([^"\n]+)"')
+    api = {"Time.h": {"Duration"}}
+    literals = {"Time.h": ("ms",)}
+
+    def lint(self, code):
+        return lint_headers("<>", code, self.api, include_re=self.include_re,
+                            literals=self.literals)
+
+    def test_unused_header(self):
+        code = '\n#include "Time.h"'
+        self.assertEqual(self.lint(code),
+            [(2,
+              '<> includes Time.h but does not reference any of its API')])
+
+    def test_used_header(self):
+        code = '#include "Time.h"\nDuration d;'
+        self.assertEqual(self.lint(code), [])
+
+    def test_unlisted_header(self):
+        code = '#include "Other.h"'
+        self.assertEqual(self.lint(code), [])
+
+    def test_symbol_in_include_only(self):
+        api = {"Duration.h": {"Duration"}}
+        code = '#include "Duration.h"'
+        changes = lint_headers("<>", code, api, include_re=self.include_re)
+        self.assertEqual(changes,
+            [(1,
+              '<> includes Duration.h but does not reference any of its API')])
+
+    def test_used_literal(self):
+        code = '#include "Time.h"\nauto d = 10ms;'
+        self.assertEqual(self.lint(code), [])
+
+    def test_literal_suffix_in_identifier(self):
+        code = '#include "Time.h"\nint items;'
+        self.assertEqual(self.lint(code),
+            [(1,
+              '<> includes Time.h but does not reference any of its API')])
 
