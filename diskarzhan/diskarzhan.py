@@ -46,7 +46,7 @@ def lint_std_headers(path, raw_content):
 
     changes = []
     for header, symbols in cxx_api.items():
-        headerline = rf"#\s*include <{header}>"
+        headerline = rf"#\s*include\s*<{header}>"
         if not (match := re.search(headerline, raw_content)):
             continue
         if not file_symbols.isdisjoint(symbols):
@@ -68,7 +68,7 @@ def lint_cstd_headers(path, raw_content):
 
     changes = []
     for header, symbols in c_api.items():
-        headerline = rf"#\s*include <({header}|c{header[:-2]})>"
+        headerline = rf"#\s*include\s*<({header}|c{header[:-2]})>"
         if not (match := re.search(headerline, raw_content)):
             continue
         if not file_symbols.isdisjoint(symbols):
