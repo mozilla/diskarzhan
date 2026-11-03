@@ -15,11 +15,38 @@ with open(os.path.join(os.path.dirname(__file__), "diskarzhan.yaml")) as fd:
 _include_re = re.compile(r"#\s*include\s*<([^>\n]+)>")
 
 
-def _find_includes(raw_content):
+def _find_includes(raw_content, include_re=_include_re):
     includes = {}
-    for match in _include_re.finditer(raw_content):
+    for match in include_re.finditer(raw_content):
         includes.setdefault(match.group(1), match)
     return includes
+
+
+def lint_headers(path, raw_content, api, *, include_re, literals=None):
+    includes = _find_includes(raw_content, include_re)
+    included = [(header, includes[header]) for header in api if header in includes]
+    if not included:
+        return []
+
+    content = include_re.sub("", raw_content)
+    file_symbols = set(re.findall(r"\w+", content))
+    literals = literals or {}
+
+    changes = []
+    for header, match in included:
+        if not file_symbols.isdisjoint(api[header]):
+            continue
+        if any(
+            re.search(rf"""[0-9."']{suffix}\b""", content)
+            for suffix in literals.get(header, ())
+        ):
+            continue
+
+        msg = f"{path} includes {header} but does not reference any of its API"
+        lineno = 1 + raw_content.count("\n", 0, match.start())
+        changes.append((lineno, msg))
+
+    return changes
 
 
 def fix_includes(path, raw_content, changes):
