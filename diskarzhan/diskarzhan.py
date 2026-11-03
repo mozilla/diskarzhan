@@ -22,14 +22,36 @@ def _find_includes(raw_content, include_re=_include_re):
     return includes
 
 
-def lint_headers(path, raw_content, api, *, include_re, literals=None):
+def lint_headers(
+    path,
+    raw_content,
+    api,
+    *,
+    include_re=_include_re,
+    literals=None,
+    symbols=None,
+    aliases=None,
+    display="{}",
+):
     includes = _find_includes(raw_content, include_re)
-    included = [(header, includes[header]) for header in api if header in includes]
+    aliases = aliases or {}
+    included = []
+    for header in api:
+        matches = [
+            includes[name]
+            for name in (header, *aliases.get(header, ()))
+            if name in includes
+        ]
+        if matches:
+            included.append((header, min(matches, key=lambda match: match.start())))
     if not included:
         return []
 
     content = include_re.sub("", raw_content)
-    file_symbols = set(re.findall(r"\w+", content))
+    if symbols:
+        file_symbols = symbols(raw_content)
+    else:
+        file_symbols = set(re.findall(r"\w+", content))
     literals = literals or {}
 
     changes = []
@@ -42,7 +64,8 @@ def lint_headers(path, raw_content, api, *, include_re, literals=None):
         ):
             continue
 
-        msg = f"{path} includes {header} but does not reference any of its API"
+        shown = display.format(match.group(1))
+        msg = f"{path} includes {shown} but does not reference any of its API"
         lineno = 1 + raw_content.count("\n", 0, match.start())
         changes.append((lineno, msg))
 
@@ -61,12 +84,7 @@ def fix_includes(path, raw_content, changes):
         outfd.write("\n".join(new_content))
 
 
-def lint_std_headers(path, raw_content):
-    includes = _find_includes(raw_content)
-    included = [(header, includes[header]) for header in cxx_api if header in includes]
-    if not included:
-        return []
-
+def _std_symbols(raw_content):
     # If there a:
     #   namespace std {...}
     # or a:
@@ -81,54 +99,34 @@ def lint_std_headers(path, raw_content):
     else:
         symbol_pattern = r"\bstd::({})\b"
 
-    file_symbols = set(
+    return set(
         re.findall(symbol_pattern.format(r"[a-zA-Z_][a-zA-Z_0-9]*"), raw_content)
     )
 
-    changes = []
-    for header, match in included:
-        if not file_symbols.isdisjoint(cxx_api[header]):
-            continue
 
-        msg = f"{path} includes <{header}> but does not reference any of its API"
-        lineno = 1 + raw_content.count("\n", 0, match.start())
-        changes.append((lineno, msg))
+def lint_std_headers(path, raw_content):
+    return lint_headers(path, raw_content, cxx_api, symbols=_std_symbols, display="<{}>")
 
-    return changes
+
+def _cstd_symbols(raw_content):
+    symbol_pattern = r"\b(?:(?:std)?::)?({})\b"
+    return set(
+        re.findall(symbol_pattern.format(r"[a-zA-Z_][a-zA-Z_0-9]*"), raw_content)
+    )
+
+
+_cstd_aliases = {header: (f"c{header[:-2]}",) for header in c_api}
 
 
 def lint_cstd_headers(path, raw_content):
-    includes = _find_includes(raw_content)
-    included = []
-    for header in c_api:
-        matches = [
-            match
-            for match in (includes.get(header), includes.get(f"c{header[:-2]}"))
-            if match
-        ]
-        if matches:
-            included.append((header, min(matches, key=lambda match: match.start())))
-    if not included:
-        return []
-
-    symbol_pattern = r"\b(?:(?:std)?::)?({})\b"
-
-    file_symbols = set(
-        re.findall(symbol_pattern.format(r"[a-zA-Z_][a-zA-Z_0-9]*"), raw_content)
+    return lint_headers(
+        path,
+        raw_content,
+        c_api,
+        symbols=_cstd_symbols,
+        aliases=_cstd_aliases,
+        display="<{}>",
     )
-
-    changes = []
-    for header, match in included:
-        if not file_symbols.isdisjoint(c_api[header]):
-            continue
-
-        msg = (
-            f"{path} includes <{match.group(1)}> but does not reference any of its API"
-        )
-        lineno = 1 + raw_content.count("\n", 0, match.start())
-        changes.append((lineno, msg))
-
-    return changes
 
 
 def lint(paths, *, fix=False):

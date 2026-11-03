@@ -47,6 +47,25 @@ class UnusedCHeaderTestCase(unittest.TestCase):
             [(1,
               '<> includes <stdio.h> but does not reference any of its API')])
 
+    def test_unused_cxxcompat_header_before_c_header(self):
+        code = "#include <cstdio>\n#include <stdio.h>"
+        changes = lint_cstd_headers("<>", code)
+        self.assertEqual(changes,
+            [(1,
+              '<> includes <cstdio> but does not reference any of its API')])
+
+    def test_unused_c_header_before_cxxcompat_header(self):
+        code = "#include <stdio.h>\n#include <cstdio>"
+        changes = lint_cstd_headers("<>", code)
+        self.assertEqual(changes,
+            [(1,
+              '<> includes <stdio.h> but does not reference any of its API')])
+
+    def test_c_header_named_after_its_api(self):
+        code = "#include <ctime>"
+        changes = lint_cstd_headers("<>", code)
+        self.assertFalse(changes)
+
 
 class UnusedCXXHeaderTestCase(unittest.TestCase):
     def test_trivially_unused_cxx_header(self):
@@ -83,6 +102,19 @@ class UnusedCXXHeaderTestCase(unittest.TestCase):
         self.assertEqual(changes,
             [(1,
               '<> includes <iostream> but does not reference any of its API')])
+
+    def test_unqualified_name_without_namespace_std(self):
+        code = "#include <iostream>\nint main() { cout << \"hello\"; }"
+        changes = lint_std_headers("<>", code)
+        self.assertEqual(changes,
+            [(1,
+              '<> includes <iostream> but does not reference any of its API')])
+
+    def test_unqualified_name_with_using_namespace_std(self):
+        code = ("#include <iostream>\nusing namespace std;\n"
+                "int main() { cout << \"hello\"; }")
+        changes = lint_std_headers("<>", code)
+        self.assertFalse(changes)
 
 
 class LintHeadersTestCase(unittest.TestCase):
